@@ -26,20 +26,29 @@ JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_MINUTES = 60
 bearer_scheme = HTTPBearer(auto_error=False)
 
-# 3. Configuración de Rate Limiter (SlowAPI)
+# 3. Configuración de Rate Limiter (SlowAPI - Corto Plazo) y Cuotas (Largo Plazo)
 limiter = Limiter(key_func=get_remote_address)
+
+# 4. Configuración de Cuotas (Uso máximo en periodos largos: Diario / Mensual)
+CUOTA_DIARIA_POR_ROL = {
+    "user": 3,      # Usuarios estándar: máximo 3 consultas pesadas por día
+    "admin": 1000   # Administradores: hasta 1000 consultas por día
+}
+# Registro en memoria del consumo acumulado en el periodo (fecha -> {username: conteo})
+CONSUMO_CUOTAS_DB = {}
 
 # Inicialización de la aplicación FastAPI
 app = FastAPI(
     title="API Segura - Demostración de Buenas Prácticas",
     description="""
-    API mejorada con 4 capas esenciales de seguridad:
+    API mejorada con 5 capas esenciales de seguridad:
     1. **API Key**: Validación de servicios externos y microservicios mediante cabecera `X-API-Key`.
     2. **JWT**: Autenticación segura y generación de tokens de sesión con expiración.
     3. **Protección BOLA/IDOR y Roles (RBAC)**: Validación estricta de propiedad de objetos y control por roles (`user` vs `admin`).
-    4. **Rate Limiting**: Mitigación de DoS y fuerza bruta limitando peticiones por minuto.
+    4. **Rate Limiting**: Mitigación de DoS y fuerza bruta limitando peticiones por minuto (corto plazo).
+    5. **Cuotas (Quotas)**: Control de uso máximo permitido en periodos largos de tiempo (por día / mes).
     """,
-    version="2.0.0"
+    version="2.1.0"
 )
 
 # Asociar el limitador de tasa y su manejador de excepción (HTTP 429)
@@ -187,6 +196,43 @@ def require_admin(current_user: dict = Depends(get_current_user)):
     return current_user
 
 
+# --- D) Control de Cuotas (Uso máximo en periodos largos de tiempo) ---
+def verificar_cuota_diaria(current_user: dict = Depends(get_current_user)):
+    """
+    Controla el consumo acumulado del usuario en un periodo largo (Diario: 24 horas).
+    A diferencia del Rate Limiter (que frena ráfagas por segundo/minuto), la Cuota
+    limita el volumen total de uso según el plan o rol del usuario en el día/mes.
+    """
+    hoy = datetime.date.today().isoformat()
+    username = current_user["username"]
+    rol = current_user["role"]
+    limite_diario = CUOTA_DIARIA_POR_ROL.get(rol, 3)
+
+    if hoy not in CONSUMO_CUOTAS_DB:
+        CONSUMO_CUOTAS_DB[hoy] = {}
+
+    uso_actual = CONSUMO_CUOTAS_DB[hoy].get(username, 0)
+
+    if uso_actual >= limite_diario:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"[CUOTA AGOTADA] Has alcanzado tu límite máximo de {limite_diario} "
+                f"consultas por día para el rol '{rol}'. Tu cuota se renovará mañana ({hoy})."
+            )
+        )
+
+    CONSUMO_CUOTAS_DB[hoy][username] = uso_actual + 1
+    return {
+        "usuario": username,
+        "rol": rol,
+        "periodo": f"Diario ({hoy})",
+        "cuota_maxima": limite_diario,
+        "uso_actual": uso_actual + 1,
+        "restante": limite_diario - (uso_actual + 1)
+    }
+
+
 # ------------------------------------------------------------------------------
 # ENDPOINTS
 # ------------------------------------------------------------------------------
@@ -209,21 +255,31 @@ def inicio(request: Request):
 def info_api():
     return {
         "mensaje": "¡Bienvenido a la API con seguridad implementada!",
-        "versión": "2.0.0",
+        "versión": "2.1.0",
         "documentacion": "/docs",
-        "seguridad_activa": ["API Key", "JWT", "Protección BOLA/IDOR", "Roles RBAC", "Rate Limiting"]
+        "seguridad_activa": [
+            "1. API Key",
+            "2. JWT (Sesión y Expiración)",
+            "3. Autorización BOLA/IDOR y Roles (RBAC)",
+            "5. Rate Limiter (Corto plazo)",
+            "6. Cuotas (Largo plazo - Diario/Mensual)"
+        ]
     }
 
 
-# 2. Endpoint Público con Rate Limiter estricto (Demostración de DoS Mitigation)
+# 2. Endpoint Público con Rate Limiter (Corto plazo) + Cuota por IP (Largo plazo)
 @app.get("/publico/ping")
-@limiter.limit("5/minute")
+@limiter.limit("5/minute; 100/day")
 def ping_con_rate_limit(request: Request):
     """
-    Demostración de Rate Limiter: Máximo 5 peticiones por minuto por IP.
-    Al superar este límite, se responderá automáticamente con HTTP 429 Too Many Requests.
+    Demostración de Rate Limiter (5 peticiones/minuto) combinado con Cuota por IP (100 peticiones/día).
+    Al superar cualquiera de los límites, se responde automáticamente con HTTP 429 Too Many Requests.
     """
-    return {"mensaje": "pong", "limite": "5 peticiones por minuto"}
+    return {
+        "mensaje": "pong",
+        "rate_limit_corto_plazo": "5 peticiones por minuto",
+        "cuota_largo_plazo": "100 peticiones por día"
+    }
 
 
 # 3. Endpoint de Autenticación (Login) -> Emite JWT con Rate Limiting anti Fuerza Bruta
@@ -423,6 +479,32 @@ def panel_auditoria_admin(admin_user: dict = Depends(require_admin)):
         "resumen_propietarios": [
             {"tarea_id": t["id"], "owner_id": t["owner_id"], "titulo": t["titulo"]} for t in tareas
         ]
+    }
+
+
+# ------------------------------------------------------------------------------
+# ENDPOINT PROTEGIDO POR CUOTA DE USO A LARGO PLAZO (DIARIO / MENSUAL)
+# ------------------------------------------------------------------------------
+
+@app.get("/cuota/reporte-diario")
+@limiter.limit("10/minute; 50/day")
+def generar_reporte_con_cuota(
+    request: Request,
+    estado_cuota: dict = Depends(verificar_cuota_diaria)
+):
+    """
+    📊 Demostración de CUOTAS (Uso máximo en periodos largos de tiempo):
+    - Usuarios con rol 'user' tienen una cuota máxima de 3 reportes por día.
+    - Usuarios con rol 'admin' tienen una cuota máxima de 1000 reportes por día.
+    Al intentar la 4ta consulta en el mismo día con un usuario regular, responde con HTTP 429.
+    """
+    return {
+        "mensaje": "Reporte pesado generado exitosamente dentro de tu cuota permitida.",
+        "control_de_cuota": estado_cuota,
+        "datos_reporte": {
+            "total_tareas_sistema": len(tareas),
+            "tareas_completadas": sum(1 for t in tareas if t["hecha"])
+        }
     }
 
 

@@ -603,6 +603,19 @@
         </div>
       </div>
 
+      <!-- 5. CUOTAS (LARGO PLAZO) -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">📊 5. Cuotas (Largo Plazo)</h2>
+          <span class="pill pill-blue">Límite Diario por Rol</span>
+        </div>
+        <p class="card-desc">Control de uso máximo en periodos largos (24h). Rol <code>user</code>: máx <strong>3 reportes/día</strong>. Rol <code>admin</code>: <strong>1000/día</strong>.</p>
+
+        <div style="margin-top: 14px;">
+          <button class="btn" onclick="testDailyQuota()">📈 Consumir Cuota Diaria (/cuota/reporte-diario)</button>
+        </div>
+      </div>
+
     </div>
 
     <!-- CONSOLA DE INSPECCIÓN EN VIVO -->
@@ -863,6 +876,24 @@
         bar.style.background = "linear-gradient(to right, #10b981, #f59e0b)";
         countText.innerText = `${count} de 5 peticiones usadas`;
         statusText.innerText = "Estado: Normal";
+      }
+    }
+
+    // --- 5. CUOTAS (LARGO PLAZO) ---
+    async function testDailyQuota() {
+      if (!activeToken) {
+        alert("Primero inicia sesión con Usuario 1 (3/día) o Admin (1000/día) para probar la Cuota Diaria.");
+        return;
+      }
+      try {
+        const res = await fetch("/cuota/reporte-diario", {
+          headers: { "Authorization": `Bearer ${activeToken}` }
+        });
+        const data = await res.json();
+        const type = res.ok ? "ok" : "error";
+        logResponse("GET", "/cuota/reporte-diario", res.status, data, type);
+      } catch (err) {
+        logResponse("GET", "/cuota/reporte-diario", 500, err.message, "error");
       }
     }
   </script>
