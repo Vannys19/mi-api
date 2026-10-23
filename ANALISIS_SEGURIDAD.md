@@ -95,7 +95,8 @@ def obtener_tarea(tarea_id: int):
 
 | Método | Endpoint | Seguridad Aplicada | Regla de Acceso |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/` | Rate Limit (30/min) | Público |
+| `GET` | `/` | Interfaz Web Interactiva (Dashboard) | Público (Centro de Control) |
+| `GET` | `/api/info` | Rate Limit (30/min) | Información de la API en JSON |
 | `GET` | `/publico/ping` | Rate Limit (5/min) | Público (Prueba de DoS) |
 | `POST` | `/auth/login` | Rate Limit (5/min) + JWT Issuer | Credenciales válidas |
 | `GET` | `/sistema/estado` | API Key (`X-API-Key`) | Microservicios / Clientes de confianza |

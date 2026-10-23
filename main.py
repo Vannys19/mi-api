@@ -1,6 +1,9 @@
+import os
 import datetime
 from typing import Optional, List
 from fastapi import FastAPI, Depends, HTTPException, Security, status, Request
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, APIKeyHeader
 from pydantic import BaseModel
 import jwt
@@ -42,6 +45,11 @@ app = FastAPI(
 # Asociar el limitador de tasa y su manejador de excepción (HTTP 429)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Montar carpeta estática para la interfaz gráfica
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 # ------------------------------------------------------------------------------
@@ -183,10 +191,22 @@ def require_admin(current_user: dict = Depends(get_current_user)):
 # ENDPOINTS
 # ------------------------------------------------------------------------------
 
-# 1. Endpoint Público de bienvenida con Rate Limiter
-@app.get("/")
-@limiter.limit("30/minute")
+# 1. Interfaz Gráfica Interactiva del Centro de Seguridad
+@app.get("/", response_class=HTMLResponse)
+@limiter.limit("60/minute")
 def inicio(request: Request):
+    """
+    Sirve el Centro de Pruebas de Seguridad (Web Dashboard interactivo).
+    Permite probar visualmente API Key, JWT, BOLA/IDOR y Rate Limiting.
+    """
+    index_file = os.path.join(os.path.dirname(__file__), "static", "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return HTMLResponse("<h2>API Segura Activa</h2><p>Documentación en <a href='/docs'>/docs</a></p>")
+
+
+@app.get("/api/info")
+def info_api():
     return {
         "mensaje": "¡Bienvenido a la API con seguridad implementada!",
         "versión": "2.0.0",

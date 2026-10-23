@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centro de Seguridad API - Panel Interactivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --card-hover: #1e293b;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --emerald: #10b981;
+      --emerald-bg: rgba(16, 185, 129, 0.12);
+      --rose: #f43f5e;
+      --rose-bg: rgba(244, 63, 94, 0.12);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.12);
+      --indigo-bg: rgba(99, 102, 241, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      font-size: 32px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      padding: 8px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--emerald-bg);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .badge-status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--emerald);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    .docs-btn {
+      background: #1f2937;
+      color: #f3f4f6;
+      border: 1px solid #374151;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .docs-btn:hover {
+      background: #374151;
+      border-color: #4b5563;
+    }
+
+    /* GRID LAYOUT */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: #374151;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .pill-blue { background: var(--indigo-bg); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .pill-green { background: var(--emerald-bg); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .pill-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .pill-red { background: var(--rose-bg); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* FORMS & INPUTS */
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    input, select {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      color: #f8fafc;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    /* BUTTONS */
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: #1f2937;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #374151;
+    }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.2);
+      color: #f43f5e;
+      border: 1px solid rgba(244, 63, 94, 0.4);
+    }
+
+    .btn-danger:hover {
+      background: rgba(244, 63, 94, 0.3);
+    }
+
+    .btn-warning {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-warning:hover {
+      background: rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn-group .btn {
+      flex: 1;
+    }
+
+    /* USER BADGE (SESSION ACTIVE) */
+    .session-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .session-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    /* BOLA INTERACTIVE TASKS */
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .task-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .task-owner {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-icon {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-icon:hover {
+      background: #334155;
+    }
+
+    /* LIVE CONSOLE / INSPECTOR */
+    .console-card {
+      background: #0b0f19;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .console-header {
+      background: #111827;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .console-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #94a3b8;
+    }
+
+    .clear-btn {
+      background: transparent;
+      border: 1px solid #374151;
+      color: #9ca3af;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .clear-btn:hover {
+      background: #1f2937;
+      color: #fff;
+    }
+
+    .console-logs {
+      padding: 16px;
+      max-height: 280px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .log-entry {
+      background: rgba(17, 24, 39, 0.7);
+      border-left: 3px solid #6366f1;
+      padding: 8px 12px;
+      border-radius: 0 6px 6px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .log-entry.ok { border-left-color: var(--emerald); }
+    .log-entry.error { border-left-color: var(--rose); }
+    .log-entry.warn { border-left-color: var(--amber); }
+
+    .log-top {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+    }
+
+    .log-payload {
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ANIMATED RATE LIMIT COUNTER */
+    .rate-bar-container {
+      background: #0f172a;
+      border-radius: 9999px;
+      height: 10px;
+      overflow: hidden;
+      margin: 12px 0 6px 0;
+      border: 1px solid #1e293b;
+    }
+
+    .rate-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, #10b981, #f59e0b, #f43f5e);
+      transition: width 0.3s;
+    }
+
+    .rate-text {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HEADER -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div>
+          <h1 class="brand-title">API Segura - Centro de Pruebas</h1>
+          <p class="brand-subtitle">Panel interactivo para demostración de API Key, JWT, BOLA/IDOR y Rate Limiting</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="badge-status">API Operativa</span>
+        <a href="/docs" target="_blank" class="docs-btn">📘 Abrir Swagger UI</a>
+      </div>
+    </header>
+
+    <!-- GRID DE LOS 4 PILARES DE SEGURIDAD -->
+    <div class="grid">
+
+      <!-- 1. API KEY -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">🔑 1. API Key</h2>
+          <span class="pill pill-blue">Cabecera X-API-Key</span>
+        </div>
+        <p class="card-desc">Protección de endpoints para microservicios y servicios externos mediante cabecera HTTP personalizada.</p>
+        
+        <div class="form-group">
+          <label>Valor de API Key:</label>
+          <input type="text" id="inputApiKey" value="segura-api-key-987654321" placeholder="Ingresa la API Key...">
+        </div>
+
+        <button class="btn" onclick="testApiKey()">
+          <span>Probar /sistema/estado</span>
+        </button>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="setApiKeyValid()">Cargar Válida</button>
+          <button class="btn btn-secondary" onclick="setApiKeyInvalid()">Cargar Inválida</button>
+        </div>
+      </div>
+
+      <!-- 2. AUTENTICACIÓN JWT -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">🔐 2. Autenticación JWT</h2>
+          <span class="pill pill-green">Tokens Bearer</span>
+        </div>
+        <p class="card-desc">Tokens firmados con HS256, expiración automática y datos de usuario encriptados.</p>
+
+        <div id="sessionContainer">
+          <div class="session-badge">
+            <div class="session-user">
+              <div class="avatar" id="userAvatar">?</div>
+              <div>
+                <strong id="userDisplayName" style="font-size: 13px;">No autenticado</strong>
+                <div id="userRoleTag" style="font-size: 11px; color: var(--text-muted);">Inicia sesión abajo</div>
+              </div>
+            </div>
+            <button class="btn-icon" id="logoutBtn" style="display:none;" onclick="logout()">Salir</button>
+          </div>
+        </div>
+
+        <label>Inicio Rápido de Sesión:</label>
+        <div class="btn-group" style="margin-bottom: 8px;">
+          <button class="btn btn-secondary" onclick="loginQuick('usuario1', 'password123')">Usuario 1 (User)</button>
+          <button class="btn btn-secondary" onclick="loginQuick('usuario2', 'password456')">Usuario 2 (User)</button>
+          <button class="btn btn-secondary" onclick="loginQuick('admin', 'adminpassword')">Admin</button>
+        </div>
+        <button class="btn btn-secondary" onclick="testProtectedTasks()">Ver Mis Tareas (GET /tareas)</button>
+      </div>
+
+      <!-- 3. ANÁLISIS BOLA / IDOR & ROLES -->
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-header">
+          <h2 class="card-title">🛡️ 3. BOLA / IDOR & Roles</h2>
+          <span class="pill pill-red">Control de Objeto</span>
+        </div>
+        <p class="card-desc">Verificación estricta de propiedad (<code>owner_id</code>). Solo el dueño o un admin pueden leer/modificar.</p>
+
+        <div style="margin-bottom: 12px;">
+          <div class="task-item">
+            <div class="task-meta">
+              <strong>Tarea #1: Aprender Docker</strong>
+              <span class="task-owner">Propietario: Usuario 1 (ID 1)</span>
+            </div>
+            <div class="task-actions">
+              <button class="btn-icon" onclick="getTask(1)">Consultar</button>
+              <button class="btn-icon" onclick="deleteTask(1)">Borrar</button>
+            </div>
+          </div>
+
+          <div class="task-item">
+            <div class="task-meta">
+              <strong>Tarea #3: Configurar Servidor</strong>
+              <span class="task-owner">Propietario: Usuario 2 (ID 2)</span>
+            </div>
+            <div class="task-actions">
+              <button class="btn-icon" onclick="getTask(3)">Consultar</button>
+              <button class="btn-icon" onclick="deleteTask(3)">Borrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-warning" onclick="testVulnerableEndpoint(3)" title="Prueba el endpoint sin seguridad">⚠️ Endpoint Vulnerable (/vulnerable/3)</button>
+          <button class="btn btn-secondary" onclick="testAdminAudit()">Panel Admin (/admin/auditoria)</button>
+        </div>
+      </div>
+
+      <!-- 4. RATE LIMITER -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">⏱️ 4. Rate Limiter</h2>
+          <span class="pill pill-amber">SlowAPI Anti-DoS</span>
+        </div>
+        <p class="card-desc">Límite dinámico por IP. El endpoint <code>/publico/ping</code> permite 5 peticiones/minuto.</p>
+
+        <div class="rate-bar-container">
+          <div class="rate-bar" id="rateBar"></div>
+        </div>
+        <div class="rate-text">
+          <span id="rateCountText">0 de 5 peticiones usadas</span>
+          <span id="rateStatusText">Estado: Normal</span>
+        </div>
+
+        <div style="margin-top: 14px;">
+          <button class="btn btn-secondary" style="margin-bottom: 8px;" onclick="sendSinglePing()">Enviar 1 Petición (/publico/ping)</button>
+          <button class="btn btn-danger" onclick="triggerSpamRateLimit()">💥 Enviar Ráfaga de 6 Peticiones (Simular Ataque)</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CONSOLA DE INSPECCIÓN EN VIVO -->
+    <div class="console-card">
+      <div class="console-header">
+        <span class="console-title">📡 Inspector de Peticiones y Respuestas HTTP en Tiempo Real</span>
+        <button class="clear-btn" onclick="clearLogs()">Limpiar Consola</button>
+      </div>
+      <div class="console-logs" id="consoleLogs">
+        <div class="log-entry">
+          <div class="log-top">
+            <span>SISTEMA INICIADO</span>
+            <span>200 OK</span>
+          </div>
+          <div class="log-payload">Haz clic en los botones de prueba arriba para inspeccionar el tráfico HTTP y las respuestas de seguridad.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let activeToken = localStorage.getItem("jwt_token") || "";
+    let activeUser = JSON.parse(localStorage.getItem("jwt_user") || "null");
+    let pingCount = 0;
+
+    // Actualizar vista de usuario al cargar
+    updateUserUI();
+
+    function logResponse(method, url, status, data, type = "ok") {
+      const logs = document.getElementById("consoleLogs");
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement("div");
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = `
+        <div class="log-top">
+          <span>${time} - ${method} ${url}</span>
+          <span>HTTP ${status}</span>
+        </div>
+        <div class="log-payload">${typeof data === "string" ? data : JSON.stringify(data, null, 2)}</div>
+      `;
+      logs.prepend(entry);
+    }
+
+    function clearLogs() {
+      document.getElementById("consoleLogs").innerHTML = "";
+    }
+
+    // --- 1. API KEY ---
+    async function testApiKey() {
+      const key = document.getElementById("inputApiKey").value.trim();
+      const headers = {};
+      if (key) headers["X-API-Key"] = key;
+
+      try {
+        const res = await fetch("/sistema/estado", { headers });
+        const data = await res.json();
+        const type = res.ok ? "ok" : "error";
+        logResponse("GET", "/sistema/estado", res.status, data, type);
+      } catch (err) {
+        logResponse("GET", "/sistema/estado", 500, err.message, "error");
+      }
+    }
+
+    function setApiKeyValid() {
+      document.getElementById("inputApiKey").value = "segura-api-key-987654321";
+      testApiKey();
+    }
+
+    function setApiKeyInvalid() {
+      document.getElementById("inputApiKey").value = "clave_invalida_xyz";
+      testApiKey();
+    }
+
+    // --- 2. JWT ---
+    async function loginQuick(username, password) {
+      try {
+        const res = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          activeToken = data.access_token;
+          activeUser = data.usuario;
+          localStorage.setItem("jwt_token", activeToken);
+          localStorage.setItem("jwt_user", JSON.stringify(activeUser));
+          updateUserUI();
+          logResponse("POST", "/auth/login", res.status, data, "ok");
+        } else {
+          logResponse("POST", "/auth/login", res.status, data, "error");
+        }
+      } catch (err) {
+        logResponse("POST", "/auth/login", 500, err.message, "error");
+      }
+    }
+
+    function logout() {
+      activeToken = "";
+      activeUser = null;
+      localStorage.removeItem("jwt_token");
+      localStorage.removeItem("jwt_user");
+      updateUserUI();
+      logResponse("AUTH", "Sesión finalizada", 200, "Token JWT eliminado del cliente.", "warn");
+    }
+
+    function updateUserUI() {
+      const avatar = document.getElementById("userAvatar");
+      const name = document.getElementById("userDisplayName");
+      const role = document.getElementById("userRoleTag");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      if (activeUser && activeToken) {
+        avatar.innerText = activeUser.username.substring(0, 2).toUpperCase();
+        name.innerText = `${activeUser.nombre} (@${activeUser.username})`;
+        role.innerHTML = `<span class="pill ${activeUser.role === 'admin' ? 'pill-green' : 'pill-blue'}">Rol: ${activeUser.role.toUpperCase()} (ID: ${activeUser.id})</span>`;
+        logoutBtn.style.display = "block";
+      } else {
+        avatar.innerText = "?";
+        name.innerText = "No autenticado";
+        role.innerText = "Inicia sesión con uno de los botones abajo";
+        logoutBtn.style.display = "none";
+      }
+    }
+
+    async function testProtectedTasks() {
+      if (!activeToken) {
+        alert("Primero debes iniciar sesión con uno de los botones de usuario.");
+        return;
+      }
+      try {
+        const res = await fetch("/tareas", {
+          headers: { "Authorization": `Bearer ${activeToken}` }
+        });
+        const data = await res.json();
+        logResponse("GET", "/tareas", res.status, data, res.ok ? "ok" : "error");
+      } catch (err) {
+        logResponse("GET", "/tareas", 500, err.message, "error");
+      }
+    }
+
+    // --- 3. BOLA / IDOR ---
+    async function getTask(id) {
+      if (!activeToken) {
+        alert("Primero inicia sesión con Usuario 1 o Usuario 2 para probar la protección BOLA.");
+        return;
+      }
+      try {
+        const res = await fetch(`/tareas/${id}`, {
+          headers: { "Authorization": `Bearer ${activeToken}` }
+        });
+        const data = await res.json();
+        const type = res.ok ? "ok" : "error";
+        logResponse("GET", `/tareas/${id}`, res.status, data, type);
+      } catch (err) {
+        logResponse("GET", `/tareas/${id}`, 500, err.message, "error");
+      }
+    }
+
+    async function deleteTask(id) {
+      if (!activeToken) {
+        alert("Primero inicia sesión para probar la protección BOLA en borrado.");
+        return;
+      }
+      try {
+        const res = await fetch(`/tareas/${id}`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${activeToken}` }
+        });
+        const data = await res.json();
+        const type = res.ok ? "ok" : "error";
+        logResponse("DELETE", `/tareas/${id}`, res.status, data, type);
+      } catch (err) {
+        logResponse("DELETE", `/tareas/${id}`, 500, err.message, "error");
+      }
+    }
+
+    async function testVulnerableEndpoint(id) {
+      try {
+        const res = await fetch(`/vulnerable/tareas/${id}`);
+        const data = await res.json();
+        logResponse("GET", `/vulnerable/tareas/${id}`, res.status, data, "warn");
+      } catch (err) {
+        logResponse("GET", `/vulnerable/tareas/${id}`, 500, err.message, "error");
+      }
+    }
+
+    async function testAdminAudit() {
+      if (!activeToken) {
+        alert("Primero inicia sesión con un usuario o con admin.");
+        return;
+      }
+      try {
+        const res = await fetch("/admin/auditoria", {
+          headers: { "Authorization": `Bearer ${activeToken}` }
+        });
+        const data = await res.json();
+        const type = res.ok ? "ok" : "error";
+        logResponse("GET", "/admin/auditoria", res.status, data, type);
+      } catch (err) {
+        logResponse("GET", "/admin/auditoria", 500, err.message, "error");
+      }
+    }
+
+    // --- 4. RATE LIMITER ---
+    async function sendSinglePing() {
+      try {
+        const res = await fetch("/publico/ping");
+        const data = await res.json();
+        if (res.ok) {
+          pingCount = (pingCount + 1) % 6;
+          updateRateBar(pingCount);
+          logResponse("GET", "/publico/ping", res.status, data, "ok");
+        } else {
+          updateRateBar(6, true);
+          logResponse("GET", "/publico/ping", res.status, data, "error");
+        }
+      } catch (err) {
+        logResponse("GET", "/publico/ping", 500, err.message, "error");
+      }
+    }
+
+    async function triggerSpamRateLimit() {
+      logResponse("SPAM", "Iniciando ráfaga de 6 peticiones seguidas a /publico/ping...", 0, "Probando activación de HTTP 429", "warn");
+      for (let i = 1; i <= 6; i++) {
+        try {
+          const res = await fetch("/publico/ping");
+          const data = await res.json();
+          if (res.status === 429) {
+            updateRateBar(6, true);
+            logResponse("GET", `/publico/ping (Petición #${i})`, res.status, data, "error");
+            break;
+          } else {
+            updateRateBar(i);
+            logResponse("GET", `/publico/ping (Petición #${i})`, res.status, data, "ok");
+          }
+        } catch (err) {
+          logResponse("GET", "/publico/ping", 500, err.message, "error");
+        }
+        await new Promise(r => setTimeout(r, 120));
+      }
+    }
+
+    function updateRateBar(count, exceeded = false) {
+      const bar = document.getElementById("rateBar");
+      const countText = document.getElementById("rateCountText");
+      const statusText = document.getElementById("rateStatusText");
+
+      if (exceeded) {
+        bar.style.width = "100%";
+        bar.style.background = "var(--rose)";
+        countText.innerText = "Límite Excedido (5/5 agotadas)";
+        statusText.innerHTML = "<strong style='color: var(--rose);'>🚨 429 Too Many Requests</strong>";
+      } else {
+        const pct = Math.min((count / 5) * 100, 100);
+        bar.style.width = `${pct}%`;
+        bar.style.background = "linear-gradient(to right, #10b981, #f59e0b)";
+        countText.innerText = `${count} de 5 peticiones usadas`;
+        statusText.innerText = "Estado: Normal";
+      }
+    }
+  </script>
+</body>
+</html>
